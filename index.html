@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Looping Playlist</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #nowPlaying {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>My Playlist</h1>
+  <audio id="player" controls></audio>
+  <br>
+  <button onclick="startPlaylist()">Start Playlist</button>
+  <button onclick="startShuffle()">Shuffle Mode</button>
+  <button onclick="stopPlaylist()">Stop</button>
+  <button onclick="prevSong()">Previous</button>
+  <button onclick="nextSong()">Next</button>
+
+  <h2 id="nowPlaying"></h2>
+
+  <script>
+    // Add your song file paths here
+    const songs = [
+  "songs/romantichomicide.mp3",
+  "songs/feelit.mp3",
+  "songs/sleepwell.mp3",
+  "songs/onemoredance.mp3",
+  "songs/ohceleste.mp3", 
+  "songs/whereditgowrong.mp3",
+  "songs/youleftmefirst.mp3",
+];
+
+    const player = document.getElementById("player");
+    let currentIndex = 0;
+    let playlistActive = false;
+    let shuffleMode = false;
+
+    function startPlaylist() {
+      playlistActive = true;
+      shuffleMode = false;
+      currentIndex = 0;
+      playCurrentSong();
+    }
+
+    function startShuffle() {
+      playlistActive = true;
+      shuffleMode = true;
+      playRandomSong();
+    }
+
+    function stopPlaylist() {
+      playlistActive = false;
+      player.pause();
+      document.getElementById("nowPlaying").textContent = "";
+    }
+
+    function playCurrentSong() {
+      player.src = songs[currentIndex];
+      player.play();
+      document.getElementById("nowPlaying").textContent =
+        "Now Playing: " + songs[currentIndex].split("/").pop();
+    }
+
+    function playRandomSong() {
+      currentIndex = Math.floor(Math.random() * songs.length);
+      playCurrentSong();
+    }
+
+    function nextSong() {
+      if (shuffleMode) {
+        playRandomSong();
+      } else {
+        currentIndex++;
+        if (currentIndex >= songs.length) {
+          currentIndex = 0; // loop back to start
+        }
+        playCurrentSong();
+      }
+    }
+
+    function prevSong() {
+      if (shuffleMode) {
+        playRandomSong();
+      } else {
+        currentIndex--;
+        if (currentIndex < 0) {
+          currentIndex = songs.length - 1; // loop to last song
+        }
+        playCurrentSong();
+      }
+    }
+
+    // When a song ends, move to the next one
+    player.addEventListener("ended", () => {
+      if (playlistActive) {
+        nextSong();
+      }
+    });
+  </script>
+</body>
+</html>
