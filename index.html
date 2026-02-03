@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Looping Playlist</title>
   <style>
     body {
@@ -19,41 +19,50 @@
       font-size: 18px;
       font-weight: bold;
     }
+    .active {
+      background-color: #4CAF50;
+      color: white;
+    }
   </style>
 </head>
 <body>
   <h1>My Playlist</h1>
   <audio id="player" controls></audio>
   <br>
-  <button onclick="startPlaylist()">Start Playlist</button>
-  <button onclick="startShuffle()">Shuffle Mode</button>
-  <button onclick="stopPlaylist()">Stop</button>
-  <button onclick="prevSong()">Previous</button>
-  <button onclick="nextSong()">Next</button>
+  <button id="startBtn" onclick="startPlaylist()">Start Playlist</button>
+  <button id="shuffleBtn" onclick="startShuffle()">Shuffle Mode</button>
+  <button id="stopBtn" onclick="stopPlaylist()">Stop</button>
+  <button id="prevBtn" onclick="prevSong()">Previous</button>
+  <button id="nextBtn" onclick="nextSong()">Next</button>
+  <button id="loopBtn" onclick="toggleLoop()">Loop: Off</button>
 
   <h2 id="nowPlaying"></h2>
 
   <script>
-    // Add your song file paths here
+    // Make sure filenames and paths are correct and include the extension
     const songs = [
-  "songs/neverknewaheartcouldbreakitself.mp3",
+      "songs/neverknewaheartcouldbreakitself.mp3",
   "songs/feelit.mp3",
   "songs/Circles.mp3",
   "songs/angelofdarkness.mp3",
   "songs/cry.mp3",
   "songs/sleepwell.mp3",
   "songs/Mitski.mp3",
-  
-];
+    ];
 
     const player = document.getElementById("player");
+    const loopBtn = document.getElementById("loopBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+
     let currentIndex = 0;
     let playlistActive = false;
     let shuffleMode = false;
+    let loopMode = false; // when true, repeat current track
 
     function startPlaylist() {
       playlistActive = true;
       shuffleMode = false;
+      shuffleBtn.classList.remove("active");
       currentIndex = 0;
       playCurrentSong();
     }
@@ -61,6 +70,7 @@
     function startShuffle() {
       playlistActive = true;
       shuffleMode = true;
+      shuffleBtn.classList.add("active");
       playRandomSong();
     }
 
@@ -72,13 +82,29 @@
 
     function playCurrentSong() {
       player.src = songs[currentIndex];
-      player.play();
-      document.getElementById("nowPlaying").textContent =
-        "Now Playing: " + songs[currentIndex].split("/").pop();
+      player.loop = loopMode; // ensure loop property matches mode
+      player.load();
+      player.play().catch(err => {
+        // Autoplay policies or other errors may reject the promise
+        console.warn("Playback failed or was blocked:", err);
+      });
+
+      const name = songs[currentIndex].split("/").pop().replace(/\.[^/.]+$/, "");
+      document.getElementById("nowPlaying").textContent = "Now Playing: " + name;
     }
 
     function playRandomSong() {
-      currentIndex = Math.floor(Math.random() * songs.length);
+      if (songs.length === 0) return;
+      // Avoid picking the same song repeatedly unless there's only one
+      if (songs.length > 1) {
+        let next;
+        do {
+          next = Math.floor(Math.random() * songs.length);
+        } while (next === currentIndex);
+        currentIndex = next;
+      } else {
+        currentIndex = 0;
+      }
       playCurrentSong();
     }
 
@@ -106,12 +132,38 @@
       }
     }
 
-    // When a song ends, move to the next one
+    // Toggle loop for current track
+    function toggleLoop() {
+      loopMode = !loopMode;
+      player.loop = loopMode;
+      updateLoopButton();
+    }
+
+    function updateLoopButton() {
+      loopBtn.textContent = loopMode ? "Loop: On" : "Loop: Off";
+      if (loopMode) {
+        loopBtn.classList.add("active");
+      } else {
+        loopBtn.classList.remove("active");
+      }
+    }
+
+    // When a song ends, move to the next one (unless loop is true and browser handles looping)
     player.addEventListener("ended", () => {
-      if (playlistActive) {
+      // If loopMode is true, the audio element's loop property will already restart playback.
+      // Still check playlistActive so we only auto-advance when intended.
+      if (!player.loop && playlistActive) {
         nextSong();
       }
     });
+
+    // Log audio loading/playing errors for debugging
+    player.addEventListener("error", () => {
+      console.error("Audio error:", player.error);
+    });
+
+    // Initialize buttons state
+    updateLoopButton();
   </script>
 </body>
 </html>
